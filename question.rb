@@ -24,7 +24,7 @@ class Question < Model
     questions.map{|datum| Question.new(datum)}
   end
 
-  def self.find_by_user(author_id)
+  def self.find_by_author_id(author_id)
     questions = database.execute(<<-SQL, author_id)
       SELECT
         *
@@ -55,4 +55,40 @@ class Question < Model
     questions.map{|datum| Question.new(datum)}
   end
 
+  def author
+    users = Model.database.execute(<<-SQL, @author_id)
+    SELECT
+      *
+    FROM
+      users
+    WHERE
+      id = ?
+    SQL
+    users.map{|datum| User.new(datum)}
+  end
+
+  def replies
+    Reply.find_by_question_id(@id)
+  end
+
+  def followers
+    Follow.followers_for_question(@id)
+  end
+
+  def self.most_followed(n)
+    Follow.most_followed_questions(n)
+  end
+
+  def likers
+    Like.likers_for_question_id(@id)
+  end
+
+  def num_likes
+    Like.num_likes_for_question_id(@id)
+  end
+
+  def self.most_liked(n)
+    Like.most_liked_questions(n)
+  end
+  
 end

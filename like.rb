@@ -49,7 +49,7 @@ class Like < Model
     question_likes.map{|datum| Like.new(datum)}
   end
 
-  def self.count(question_id)
+  def self.num_likes_for_question_id(question_id)
     question_likes = database.execute(<<-SQL, question_id)
       SELECT
         COUNT(*)
@@ -65,6 +65,58 @@ class Like < Model
   def self.all
     question_likes = database.execute("SELECT * FROM question_likes")
     question_likes.map{|datum| Like.new(datum)}
+  end
+
+  def self.likers_for_question_id(question_id)
+    likers = database.execute(<<-SQL, question_id)
+      SELECT
+        users.*
+      FROM
+        question_likes
+      JOIN
+        users
+          ON question_likes.user_id = users.id
+      WHERE
+        question_likes.question_id = ?
+      SQL
+
+      likers.map{|datum| User.new(datum)}
+  end
+
+  def self.liked_questions_for_user_id(user_id)
+    liked_questions = database.execute(<<-SQL, user_id)
+      SELECT
+        questions.*
+      FROM
+        question_likes
+      JOIN
+        questions ON question_likes.question_id = questions.id
+      WHERE
+        question_likes.user_id = ?
+      SQL
+
+      liked_questions.map{|datum| Question.new(datum)}
+  end
+
+  def self.most_liked_questions(n)
+    liked_questions = database.execute(<<-SQL, n)
+      SELECT
+        questions.*, COUNT(*)
+      FROM
+        question_likes
+      JOIN
+        questions
+      ON
+        question_likes.question_id = questions.id
+      GROUP BY
+        questions.id
+      ORDER BY
+        COUNT(*), questions.id ASC
+      LIMIT
+        ?
+    SQL
+
+    liked_questions.map {|datum| Question.new(datum)}
   end
 
 end

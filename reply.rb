@@ -69,4 +69,53 @@ class Reply < Model
     replies.map{|datum| Reply.new(datum)}
   end
 
+  def author
+    users = Model.database.execute(<<-SQL, @user_id)
+    SELECT
+      *
+    FROM
+      users
+    WHERE
+      id = ?
+    SQL
+    users.map{|datum| User.new(datum)}
+  end
+
+  def question
+    questions = Model.database.execute(<<-SQL, @question_id)
+    SELECT
+      *
+    FROM
+      questions
+    WHERE
+      id = ?
+    SQL
+    questions.map{|datum| Question.new(datum)}
+  end
+
+  def parent_reply
+    return [] if @parent_id.nil?
+    parent_reply = Model.database.execute(<<-SQL, @parent_id)
+    SELECT
+      *
+    FROM
+      replies
+    WHERE
+      parent_id = ?
+    SQL
+    parent_reply.map{|datum| Reply.new(datum)}
+  end
+
+  def child_replies
+    child_replies = Model.database.execute(<<-SQL, @id)
+    SELECT
+      *
+    FROM
+      replies
+    WHERE
+      parent_id = ?
+    SQL
+    child_replies.map{|datum| Reply.new(datum)}
+  end
+
 end
