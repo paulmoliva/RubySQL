@@ -1,5 +1,6 @@
 require 'sqlite3'
 require_relative 'question_database.rb'
+require_relative 'model.rb'
 
 
 
@@ -85,25 +86,40 @@ class User < Model
   end
 
   def average_karma
-    avg = Model.database.execute(<<-SQL,@id)
+    questions = Model.database.execute(<<-SQL,@id)
       SELECT
-        CAST(
-          COUNT(DISTINCT(likes.question_id))
-        AS FLOAT)
-      FROM
-        (SELECT
-          *
-        FROM
-          questions
-        LEFT OUTER JOIN
-          question_likes
-        ON
-          questions.id = question_likes.question_id
-        WHERE
-          questions.author_id = ?) likes
-
+        (CAST(COUNT(question_likes.question_id) AS FLOAT) /
+        CAST(COUNT(DISTINCT questions.id) AS FLOAT)) avg_likes
+      FROM questions
+      LEFT OUTER JOIN question_likes
+      ON questions.id = question_likes.question_id
+      WHERE questions.author_id = ?
     SQL
 
+    questions.first['avg_likes']
+
+  end
+
+  def save
+    if @id.nil?
+      user = Model.database.execute(<<-SQL, @fname, @lname)
+        INSERT INTO
+          users (fname, lname)
+        VALUES
+          (?,?)
+      SQL
+      @id = Model.database.last_insert_row_id
+    else
+      user = Model.database.execute(<<-SQL, @fname, @lname, @id)
+        UPDATE
+          users
+        SET
+          fname = ?,
+          lname = ?
+        WHERE id = ?
+      SQL
+    end
+    @id
   end
 
 end

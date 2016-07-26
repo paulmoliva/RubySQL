@@ -118,4 +118,28 @@ class Reply < Model
     child_replies.map{|datum| Reply.new(datum)}
   end
 
+  def save
+    if @id.nil?
+      reply = Model.database.execute(<<-SQL, @question_id, @parent_id, @user_id, @body)
+        INSERT INTO
+          replies (question_id, parent_id, user_id, body)
+        VALUES
+          (?,?,?,?)
+      SQL
+      @id = Model.database.last_insert_row_id
+    else
+      reply = Model.database.execute(<<-SQL, @question_id, @parent_id, @user_id, @body, @id)
+        UPDATE
+          replies
+        SET
+          question_id = ?,
+          parent_id = ?,
+          user_id = ?,
+          body = ?
+        WHERE id = ?
+      SQL
+    end
+    @id
+  end
+
 end

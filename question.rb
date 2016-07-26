@@ -90,5 +90,28 @@ class Question < Model
   def self.most_liked(n)
     Like.most_liked_questions(n)
   end
-  
+
+  def save
+    if @id.nil?
+      question = Model.database.execute(<<-SQL, @title, @body, @author_id)
+        INSERT INTO
+          questions (title, body, author_id)
+        VALUES
+          (?,?,?)
+      SQL
+      @id = Model.database.last_insert_row_id
+    else
+      question = Model.database.execute(<<-SQL, @title, @body, @author_id, @id)
+        UPDATE
+          questions
+        SET
+          title = ?,
+          body = ?,
+          author_id = ?
+        WHERE id = ?
+      SQL
+    end
+    @id
+  end
+
 end
