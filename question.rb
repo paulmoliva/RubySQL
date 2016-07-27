@@ -11,18 +11,18 @@ class Question < Model
     @author_id  =options['author_id']
   end
 
-  def self.find_by_id(id)
-    questions = database.execute(<<-SQL, id)
-      SELECT
-        *
-      FROM
-        questions
-      WHERE
-        id = ?
-    SQL
-
-    questions.map{|datum| Question.new(datum)}
-  end
+  # def self.find_by_id(id)
+  #   questions = database.execute(<<-SQL, id)
+  #     SELECT
+  #       *
+  #     FROM
+  #       questions
+  #     WHERE
+  #       id = ?
+  #   SQL
+  #
+  #   questions.map{|datum| Question.new(datum)}
+  # end
 
   def self.find_by_author_id(author_id)
     questions = database.execute(<<-SQL, author_id)
@@ -91,27 +91,32 @@ class Question < Model
     Like.most_liked_questions(n)
   end
 
-  def save
-    if @id.nil?
-      question = Model.database.execute(<<-SQL, @title, @body, @author_id)
-        INSERT INTO
-          questions (title, body, author_id)
-        VALUES
-          (?,?,?)
-      SQL
-      @id = Model.database.last_insert_row_id
-    else
-      question = Model.database.execute(<<-SQL, @title, @body, @author_id, @id)
-        UPDATE
-          questions
-        SET
-          title = ?,
-          body = ?,
-          author_id = ?
-        WHERE id = ?
-      SQL
-    end
-    @id
-  end
+  # def save
+  #   if @id.nil?
+  #     question = Model.database.execute(<<-SQL, @title, @body, @author_id)
+  #       INSERT INTO
+  #         questions (title, body, author_id)
+  #       VALUES
+  #         (?,?,?)
+  #     SQL
+  #     @id = Model.database.last_insert_row_id
+  #   else
+  #     question = Model.database.execute(<<-SQL, @title, @body, @author_id, @id)
+  #       UPDATE
+  #         questions
+  #       SET
+  #         title = ?,
+  #         body = ?,
+  #         author_id = ?
+  #       WHERE id = ?
+  #     SQL
+  #   end
+  #   @id
+  # end
 
+end
+
+if __FILE__ == $PROGRAM_NAME
+  a = Question.new({'id' => nil, 'title' => 'nhh', 'body' => 'blah', 'author_id' => '2'})
+  a.save
 end
